@@ -9,6 +9,7 @@ interface OnboardingScreenProps {
 }
 
 export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }) => {
+  const [mode, setMode] = useState<'welcome' | 'register' | 'login'>('welcome');
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -19,7 +20,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
   const solana = new SolanaService();
 
   const handleNext = () => {
-    if (step === 1) {
+    if (mode === 'register' && step === 1) {
       if (!name || !email || !phone) {
         alert('Please fill all fields');
         return;
@@ -28,20 +29,50 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
     }
   };
 
-  const handleComplete = async () => {
+  const handleRegister = async () => {
     setLoading(true);
     try {
       // Save user data
       await storage.saveUserData(email, phone);
       
-      // Create wallet
-      const wallet = await solana.createWallet();
+      // Create deterministic wallet from email+phone (so it's always the same)
+      const seed = `paypulse:${email}:${phone}`;
+      const wallet = await solana.createWallet(seed);
       await storage.saveWallet(wallet.publicKey, wallet.secretKey);
+      
+      console.log('✅ Wallet created:', wallet.publicKey.substring(0, 8) + '...');
       
       onComplete();
     } catch (error) {
-      console.error('Onboarding failed:', error);
+      console.error('Registration failed:', error);
       alert('Failed to complete setup. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async () => {
+    setLoading(true);
+    try {
+      if (!email || !phone) {
+        alert('Please enter your email and phone number');
+        return;
+      }
+
+      // Recreate wallet from credentials
+      const seed = `paypulse:${email}:${phone}`;
+      const wallet = await solana.createWallet(seed);
+      
+      // Save to storage
+      await storage.saveUserData(email, phone);
+      await storage.saveWallet(wallet.publicKey, wallet.secretKey);
+      
+      console.log('✅ Logged in with wallet:', wallet.publicKey.substring(0, 8) + '...');
+      
+      onComplete();
+    } catch (error) {
+      console.error('Login failed:', error);
+      alert('Failed to login. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -53,14 +84,126 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Progress Indicator */}
-        <View style={styles.progressContainer}>
-          <View style={[styles.progressDot, step >= 1 && styles.progressDotActive]} />
-          <View style={[styles.progressLine, step >= 2 && styles.progressLineActive]} />
-          <View style={[styles.progressDot, step >= 2 && styles.progressDotActive]} />
-        </View>
+        {mode === 'welcome' ? (
+          <View style={styles.stepContainer}>
+            <View style={styles.logoContainer}>
+              <PayPulseIcon size={100} color="gradient" />
+            </View>
+            <Text style={styles.title}>Welcome to PayPulse</Text>
+            <Text style={styles.subtitle}>
+              Send payments online or offline with Bluetooth. Your crypto wallet for any situation.
+            </Text>
 
-        {step === 1 ? (
+            <View style={styles.featureList}>
+              <View style={styles.featureItem}>
+                <Text style={styles.featureIcon}>⚡</Text>
+                <View style={styles.featureContent}>
+                  <Text style={styles.featureTitle}>Offline Payments</Text>
+                  <Text style={styles.featureText}>Send SOL via Bluetooth without internet</Text>
+                </View>
+              </View>
+
+              <View style={styles.featureItem}>
+                <Text style={styles.featureIcon}>🔒</Text>
+                <View style={styles.featureContent}>
+                  <Text style={styles.featureTitle}>Secure & Private</Text>
+                  <Text style={styles.featureText}>Your keys never leave your device</Text>
+                </View>
+              </View>
+
+              <View style={styles.featureItem}>
+                <Text style={styles.featureIcon}>🔄</Text>
+                <View style={styles.featureContent}>
+                  <Text style={styles.featureTitle}>Auto-Sync</Text>
+                  <Text style={styles.featureText}>Transactions sync when you're back online</Text>
+                </View>
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.button} 
+              onPress={() => setMode('register')}
+            >
+              <Text style={styles.buttonText}>Create New Account</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.secondaryButton} 
+              onPress={() => setMode('login')}
+            >
+              <Text style={styles.secondaryButtonText}>Login with Existing Account</Text>
+            </TouchableOpacity>
+          </View>
+        ) : mode === 'login' ? (
+          <View style={styles.stepContainer}>
+            <View style={styles.logoContainer}>
+              <PayPulseIcon size={80} color="blue" />
+            </View>
+            <Text style={styles.title}>Welcome Back</Text>
+            <Text style={styles.subtitle}>
+              Login with your email and phone to restore your wallet
+            </Text>
+
+            <View style={styles.form}>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Email Address</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="john@example.com"
+                  placeholderTextColor="#666"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Phone Number</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="+1 (555) 123-4567"
+                  placeholderTextColor="#666"
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                />
+              </View>
+
+              <View style={styles.infoBox}>
+                <Text style={styles.infoText}>
+                  💡 Your wallet is deterministically generated from your credentials. Use the same email and phone you registered with.
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={[styles.button, loading && styles.buttonDisabled]} 
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              <Text style={styles.buttonText}>
+                {loading ? 'Logging in...' : 'Login'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.backButton} 
+              onPress={() => setMode('welcome')}
+            >
+              <Text style={styles.backButtonText}>← Back</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <>
+            {/* Progress Indicator */}
+            <View style={styles.progressContainer}>
+              <View style={[styles.progressDot, step >= 1 && styles.progressDotActive]} />
+              <View style={[styles.progressLine, step >= 2 && styles.progressLineActive]} />
+              <View style={[styles.progressDot, step >= 2 && styles.progressDotActive]} />
+            </View>
+
+            {step === 1 ? (
           <View style={styles.stepContainer}>
             <View style={styles.logoContainer}>
               <PayPulseIcon size={80} color="gradient" />
@@ -159,7 +302,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
 
             <TouchableOpacity 
               style={[styles.button, loading && styles.buttonDisabled]} 
-              onPress={handleComplete}
+              onPress={handleRegister}
               disabled={loading}
             >
               <Text style={styles.buttonText}>
@@ -171,6 +314,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onComplete }
               <Text style={styles.backButtonText}>← Back</Text>
             </TouchableOpacity>
           </View>
+        )}
+          </>
         )}
       </ScrollView>
     </KeyboardAvoidingView>
@@ -310,5 +455,32 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: '#888',
     fontSize: 16,
+  },
+  secondaryButton: {
+    backgroundColor: 'transparent',
+    padding: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#2A2A3A',
+    marginTop: 12,
+  },
+  secondaryButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  infoBox: {
+    backgroundColor: 'rgba(0, 212, 255, 0.1)',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 212, 255, 0.3)',
+    marginTop: 8,
+  },
+  infoText: {
+    color: '#00D4FF',
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

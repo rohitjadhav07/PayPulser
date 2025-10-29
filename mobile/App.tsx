@@ -61,8 +61,15 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    // In production, clear all user data
-    setIsOnboarded(false);
+    try {
+      // Clear all user data
+      await storage.clearAllData();
+      console.log('✅ Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setIsOnboarded(false);
+    }
   };
 
   if (isOnboarded === null) {

@@ -53,4 +53,17 @@ export class StorageService {
     const data = await AsyncStorage.getItem(this.USER_DATA_KEY);
     return data ? JSON.parse(data) : null;
   }
+
+  async clearAllData(): Promise<void> {
+    // Clear wallet from secure storage
+    await SecureStore.deleteItemAsync(this.WALLET_KEY);
+    
+    // Clear user data and transactions
+    await AsyncStorage.multiRemove([
+      this.USER_DATA_KEY,
+      this.OFFLINE_TX_KEY
+    ]);
+    
+    console.log('✅ All user data cleared');
+  }
 }

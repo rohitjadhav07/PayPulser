@@ -1,287 +1,215 @@
-# 💰 PayPulse - Offline-First Solana Payments
+# PayPulse 💸⚡
 
-<div align="center">
+**Offline-First Crypto Payments via Bluetooth**
 
-![PayPulse](https://img.shields.io/badge/PayPulse-v1.0.0-14F195?style=for-the-badge)
-![Solana](https://img.shields.io/badge/Solana-Blockchain-9945FF?style=for-the-badge)
-![React Native](https://img.shields.io/badge/React_Native-0.81-61DAFB?style=for-the-badge)
-![Expo](https://img.shields.io/badge/Expo-SDK_54-000020?style=for-the-badge)
-
-**Send and receive SOL payments even when offline using Bluetooth technology**
-
-[Quick Start](#-quick-start) • [Features](#-features) • [Architecture](#-architecture) • [Documentation](#-documentation)
-
-</div>
-
----
-
-## 🌟 Overview
-
-PayPulse is a production-ready, offline-first Solana payment application that enables peer-to-peer cryptocurrency transactions even without internet connectivity. Using Bluetooth Low Energy (BLE) technology, users can send and receive SOL payments offline, with automatic synchronization to the blockchain when connectivity is restored.
-
-### Key Highlights
-
-- 🔐 **Secure**: Ed25519 signatures, biometric authentication, encrypted storage
-- ⚡ **Fast**: Real-time balance updates via WebSocket
-- 📱 **Offline-First**: Bluetooth payments work without internet
-- 🔔 **Smart**: Push notifications for all payment events
-- 🎨 **Beautiful**: Professional UI with glassmorphism design
-- 🛡️ **Resilient**: Comprehensive error recovery with auto-retry
+PayPulse is a revolutionary mobile payment app that enables Solana (SOL) transactions even without internet connectivity. Send and receive crypto payments via Bluetooth, with automatic synchronization when you're back online.
 
 ---
 
 ## ✨ Features
 
-### Core Functionality
-- ✅ **Wallet Management** - Create and manage Solana wallets
-- ✅ **Online Payments** - Send/receive SOL on Solana blockchain
-- ✅ **Offline Payments** - Bluetooth-based P2P transactions
-- ✅ **QR Codes** - Generate and scan payment QR codes
-- ✅ **Transaction History** - View all past transactions
-- ✅ **Auto-Sync** - Automatic blockchain sync when online
+### 🔌 Offline Payments
+- **Bluetooth LE Protocol**: Send SOL to nearby devices without internet
+- **Cryptographic Security**: All transactions are signed and verified
+- **Auto-Sync**: Transactions automatically sync to blockchain when online
 
-### Advanced Features
-- ✅ **Biometric Auth** - Face ID / Touch ID / Fingerprint
-- ✅ **Push Notifications** - Real-time payment alerts
-- ✅ **Real-Time Updates** - Live balance via WebSocket
-- ✅ **Error Recovery** - Auto-retry failed transactions
-- ✅ **Transaction Details** - Full transaction information
-- ✅ **Settings** - Network, currency, and preference management
+### 💼 Wallet Management
+- **Deterministic Wallets**: Your wallet is derived from your credentials
+- **Secure Storage**: Private keys encrypted and stored locally
+- **Easy Recovery**: Login with email + phone to restore your wallet
 
-### Security
-- ✅ **Ed25519 Signatures** - Industry-standard cryptography
-- ✅ **Secure Storage** - Encrypted private key storage
-- ✅ **Biometric Protection** - Secure sensitive operations
-- ✅ **Transaction Verification** - Cryptographic validation
-- ✅ **No Cloud Storage** - Keys never leave device
+### 🎨 Modern UI
+- **Animated Gradients**: Beautiful, fluid background animations
+- **Dark Theme**: Eye-friendly interface optimized for mobile
+- **Intuitive Design**: Simple, clean user experience
 
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js 18+
-- Expo Go app ([iOS](https://apps.apple.com/app/expo-go/id982107779) | [Android](https://play.google.com/store/apps/details?id=host.exp.exponent))
-
-### Installation
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd paypulse
-
-# Navigate to mobile directory
-cd mobile
-
-# Install dependencies
-npm install
-
-# Start development server
-npx expo start
-```
-
-### Running the App
-
-1. **Scan the QR code** with Expo Go (Android) or Camera app (iOS)
-2. **Create your wallet** - Follow the onboarding flow
-3. **Get test SOL** - Use [Solana Faucet](https://faucet.solana.com)
-4. **Start transacting!** 🎉
-
-For detailed instructions, see [QUICK_START.md](QUICK_START.md)
-
----
-
-## 📱 Screenshots
-
-### Main Screens
-- **Wallet Screen** - Balance, quick actions, real-time updates
-- **Send Screen** - Enter recipient, amount, biometric auth
-- **Receive Screen** - QR code, address sharing
-- **Bluetooth Screen** - Offline payment sending/receiving
-- **History Screen** - Transaction list with filters
-- **Settings Screen** - Network, currency, preferences
+### 🔐 Security
+- **End-to-End Encryption**: Keys never leave your device
+- **Signature Verification**: All transactions cryptographically verified
+- **Secure Storage**: Uses Expo SecureStore for sensitive data
 
 ---
 
 ## 🏗️ Architecture
 
-PayPulse uses a service-oriented architecture with clear separation of concerns:
-
 ```
-┌─────────────────────────────────────────┐
-│        Presentation Layer               │
-│   (Screens, Components, Navigation)     │
-└─────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────┐
-│       Business Logic Layer              │
-│      (Services, State Management)       │
-└─────────────────────────────────────────┘
-                    ↓
-┌─────────────────────────────────────────┐
-│           Data Layer                    │
-│  (Storage, Blockchain, Bluetooth)       │
-└─────────────────────────────────────────┘
+PayPulse/
+├── mobile/                 # React Native + Expo app
+│   ├── src/
+│   │   ├── components/    # Reusable UI components
+│   │   ├── screens/       # App screens
+│   │   ├── services/      # Business logic
+│   │   │   ├── BluetoothService.ts    # BLE protocol
+│   │   │   ├── SolanaService.ts       # Blockchain integration
+│   │   │   ├── StorageService.ts      # Local storage
+│   │   │   └── SyncService.ts         # Offline sync
+│   │   └── types/         # TypeScript definitions
+│   └── App.tsx            # Entry point
+│
+├── contracts/             # Solana smart contracts (Rust)
+│   └── payment-program/   # On-chain payment verification
+│
+├── ARCHITECTURE.md        # Detailed architecture docs
+└── FEATURES.md           # Feature specifications
 ```
 
-### Core Services
-- **SolanaService** - Blockchain interaction
-- **BluetoothService** - Offline P2P payments
-- **PaymentService** - Unified payment handling
-- **StorageService** - Data persistence
-- **NotificationService** - Push notifications
-- **BiometricService** - Authentication
-- **ErrorRecoveryService** - Error handling
+---
 
-For detailed architecture, see [ARCHITECTURE.md](ARCHITECTURE.md)
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- Expo CLI
+- Android device (Bluetooth requires physical device)
+- Solana CLI (for contract development)
+
+### Installation
+
+1. **Clone the repository**
+```bash
+git clone https://github.com/yourusername/paypulse.git
+cd paypulse
+```
+
+2. **Install mobile dependencies**
+```bash
+cd mobile
+npm install
+```
+
+3. **Start development server**
+```bash
+npx expo start
+```
+
+4. **Build for Android**
+```bash
+# Development build (with dev tools)
+eas build --platform android --profile development
+
+# Preview build (standalone)
+eas build --platform android --profile preview
+
+# Production build
+eas build --platform android --profile production
+```
 
 ---
 
-## 📚 Documentation
+## 📱 Usage
 
-- **[QUICK_START.md](QUICK_START.md)** - Getting started guide
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Technical architecture
-- **[COMPLETION_SUMMARY.md](COMPLETION_SUMMARY.md)** - Development summary
-- **[TOMORROW_TASKS.md](TOMORROW_TASKS.md)** - Task completion status
+### First Time Setup
+1. **Create Account**: Enter your name, email, and phone
+2. **Wallet Creation**: A secure Solana wallet is generated
+3. **Get Started**: You're ready to send and receive payments!
 
----
+### Sending Payments (Offline)
+1. Open the app and tap **"Bluetooth"**
+2. Tap **"Scan for Devices"**
+3. Select recipient from the list
+4. Enter amount and confirm
+5. Transaction is sent via Bluetooth
+6. Auto-syncs when you're back online
 
-## 🛠️ Tech Stack
+### Receiving Payments (Offline)
+1. Open the app and tap **"Bluetooth"**
+2. Tap **"Receive"** tab
+3. Toggle **"Enable Advertising"** ON
+4. Your device is now discoverable
+5. Accept incoming payment requests
 
-### Frontend
-- React Native 0.81.5
-- Expo SDK 54
-- TypeScript 5.3.0
-
-### Blockchain
-- @solana/web3.js 1.95.0
-- Solana Testnet/Devnet/Mainnet
-
-### Cryptography
-- tweetnacl (Ed25519)
-- bs58 (Base58 encoding)
-
-### Communication
-- react-native-ble-plx (Bluetooth)
-- WebSocket (real-time updates)
-
-### Storage
-- expo-secure-store (encrypted)
-- AsyncStorage (app data)
-
-### UI/UX
-- expo-linear-gradient
-- react-native-svg
-- react-native-qrcode-svg
-- expo-camera
+### Online Payments
+1. Tap **"Send"** on home screen
+2. Enter recipient's wallet address
+3. Enter amount and confirm
+4. Transaction is sent to Solana blockchain
 
 ---
 
-## 🔒 Security
+## 🔧 Technology Stack
 
-### Implemented
-- ✅ Ed25519 cryptographic signatures
-- ✅ Encrypted private key storage
-- ✅ Biometric authentication
-- ✅ Transaction verification
-- ✅ Secure random generation
-- ✅ No cloud storage of keys
+### Mobile App
+- **React Native** - Cross-platform mobile framework
+- **Expo** - Development and build tooling
+- **TypeScript** - Type-safe JavaScript
+- **react-native-ble-plx** - Bluetooth Low Energy
+- **@solana/web3.js** - Solana blockchain integration
+- **TweetNaCl** - Cryptographic signing
+- **Expo SecureStore** - Encrypted local storage
 
-### Recommended for Production
-- Security audit
-- Penetration testing
-- Code obfuscation
-- Certificate pinning
-- Rate limiting
+### Smart Contracts
+- **Rust** - Systems programming language
+- **Anchor** - Solana development framework
+- **Solana Program Library** - On-chain utilities
+
+---
+
+## 🔐 Security Considerations
+
+### Wallet Security
+- Private keys are generated using cryptographically secure random number generation
+- Keys are stored encrypted in device secure storage
+- Deterministic wallet generation allows recovery from credentials
+
+### Transaction Security
+- All transactions are signed with Ed25519 signatures
+- Signatures are verified before acceptance
+- Nonces prevent replay attacks
+- Timestamps ensure transaction freshness
+
+### Bluetooth Security
+- Custom BLE protocol with UUIDs
+- Cryptographic verification of all data
+- No sensitive data transmitted unencrypted
+- Recipient must explicitly accept transactions
 
 ---
 
 ## 🧪 Testing
 
-### Manual Testing
-```bash
-# Test online payments
-1. Get testnet SOL from faucet
-2. Send to another wallet
-3. Verify on Solana Explorer
+### Test Bluetooth on Physical Devices
 
-# Test offline payments
-1. Turn off WiFi on both devices
-2. Enable Bluetooth
-3. Send payment via Bluetooth
-4. Turn WiFi back on
-5. Watch auto-sync
-```
+**Requirements:**
+- 2 Android phones
+- PayPulse APK installed on both
 
-### Testing Checklist
-- [ ] Wallet creation
-- [ ] Online payments
-- [ ] Offline payments
-- [ ] QR code scanning
-- [ ] Biometric auth
-- [ ] Push notifications
-- [ ] Error recovery
-- [ ] Network switching
+**Steps:**
+1. Install the preview build APK on both devices
+2. On Device A: Open app → Bluetooth → Receive → Enable Advertising
+3. On Device B: Open app → Bluetooth → Scan for Devices
+4. Device B should see Device A in the list
+5. Select Device A, enter amount, send payment
+6. Device A receives and can accept/reject
+
+---
+
+## 📊 Roadmap
+
+- [x] Basic wallet functionality
+- [x] Online Solana payments
+- [x] Bluetooth offline payments
+- [x] Transaction signing and verification
+- [x] Auto-sync when online
+- [ ] Multi-signature support
+- [ ] QR code payments
 - [ ] Transaction history
-
----
-
-## 📊 Project Status
-
-### Completion: 95% 🎉
-
-#### What Works
-- ✅ All core features
-- ✅ All advanced features
-- ✅ Security features
-- ✅ Error handling
-- ✅ UI/UX polish
-
-#### What's Missing
-- ⚠️ BLE peripheral mode (needs native module)
-- ❌ SPL token support
-- ❌ Analytics integration
-- ❌ Crash reporting
-
----
-
-## 🚦 Roadmap
-
-### Phase 1: Core (Complete ✅)
-- [x] Wallet management
-- [x] Online payments
-- [x] Offline payments
-- [x] Transaction history
-
-### Phase 2: Advanced (Complete ✅)
-- [x] Biometric auth
-- [x] Push notifications
-- [x] Real-time updates
-- [x] Error recovery
-
-### Phase 3: Polish (Complete ✅)
-- [x] Transaction details
-- [x] Settings screen
-- [x] User-friendly errors
-- [x] App state recovery
-
-### Phase 4: Future
-- [ ] SPL token support
-- [ ] Native BLE peripheral
-- [ ] Analytics
-- [ ] Multi-wallet support
+- [ ] Push notifications
+- [ ] iOS support
+- [ ] Biometric authentication
+- [ ] Multiple wallet support
+- [ ] Token support (SPL tokens)
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow these steps:
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ---
 
@@ -293,52 +221,19 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🙏 Acknowledgments
 
-- **Solana Foundation** - Blockchain infrastructure
-- **Expo Team** - Development framework
-- **React Native Community** - Mobile framework
-- **Open Source Contributors** - Various libraries
+- Solana Foundation for the amazing blockchain platform
+- Expo team for the excellent mobile development tools
+- React Native BLE PLX for Bluetooth functionality
+- The open-source community
 
 ---
 
-## 📞 Support
+## 📞 Contact
 
-### Resources
-- [Solana Docs](https://docs.solana.com)
-- [Expo Docs](https://docs.expo.dev)
-- [React Native Docs](https://reactnative.dev)
-
-### Common Issues
-
-**Q: App won't start?**
-```bash
-cd mobile
-rm -rf node_modules
-npm install
-npx expo start -c
-```
-
-**Q: Bluetooth not working?**
-- Enable Bluetooth in settings
-- Grant location permission (Android)
-- Ensure devices are nearby
-
-**Q: Transactions failing?**
-- Check internet connection
-- Verify sufficient balance
-- Try different network in Settings
+For questions, issues, or suggestions:
+- Open an issue on GitHub
+- Email: your-email@example.com
 
 ---
 
-## 🌟 Star History
-
-If you find PayPulse useful, please consider giving it a star! ⭐
-
----
-
-<div align="center">
-
-**Built with ❤️ using React Native, Expo, and Solana**
-
-[Report Bug](https://github.com/yourusername/paypulse/issues) • [Request Feature](https://github.com/yourusername/paypulse/issues)
-
-</div>
+**Built with ❤️ for the future of offline payments**

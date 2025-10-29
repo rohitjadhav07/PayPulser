@@ -4,6 +4,7 @@ import nacl from 'tweetnacl';
 import bs58 from 'bs58';
 import { Buffer } from 'buffer';
 import { v4 as uuidv4 } from 'uuid';
+import { PermissionsAndroid, Platform } from 'react-native';
 
 // PayPulse BLE Protocol UUIDs
 const PAYPULSE_SERVICE_UUID = '00001234-0000-1000-8000-00805f9b34fb';
@@ -63,6 +64,15 @@ export class BluetoothService {
     
     try {
       console.log('🔄 Initializing Bluetooth...');
+      
+      // Request Android permissions first
+      if (Platform.OS === 'android') {
+        const granted = await this.requestAndroidPermissions();
+        if (!granted) {
+          throw new Error('Bluetooth permissions are required. Please grant permissions in app settings.');
+        }
+      }
+      
       const manager = this.getManager();
       
       // Check Bluetooth state
@@ -91,6 +101,64 @@ export class BluetoothService {
     } catch (error) {
       console.error('❌ Bluetooth initialization failed:', error);
       throw error;
+    }
+  }
+
+  private async requestAndroidPermissions(): Promise<boolean> {
+    try {
+      if (Platform.OS !== 'android') {
+        return true;
+      }
+
+      const apiLevel = Platform.Version;
+      console.log('📱 Android API Level:', apiLevel);
+
+      if (apiLevel >= 31) {
+        // Android 12+ (API 31+) requires BLUETOOTH_SCAN and BLUETOOTH_CONNECT
+        console.log('🔐 Requesting Android 12+ Bluetooth permissions...');
+        
+        const granted = await PermissionsAndroid.requestMultiple([
+          PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+          PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        ]);
+
+        const allGranted = 
+          granted['android.permission.BLUETOOTH_SCAN'] === PermissionsAndroid.RESULTS.GRANTED &&
+          granted['android.permission.BLUETOOTH_CONNECT'] === PermissionsAndroid.RESULTS.GRANTED &&
+          granted['android.permission.ACCESS_FINE_LOCATION'] === PermissionsAndroid.RESULTS.GRANTED;
+
+        if (allGranted) {
+          console.log('✅ All Bluetooth permissions granted');
+          return true;
+        } else {
+          console.log('❌ Some permissions denied:', granted);
+          return false;
+        }
+      } else {
+        // Android 11 and below requires ACCESS_FINE_LOCATION
+        console.log('🔐 Requesting Android 11- Bluetooth permissions...');
+        
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: 'Location Permission',
+            message: 'Bluetooth requires location permission to scan for devices',
+            buttonPositive: 'OK',
+          }
+        );
+
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          console.log('✅ Location permission granted');
+          return true;
+        } else {
+          console.log('❌ Location permission denied');
+          return false;
+        }
+      }
+    } catch (error) {
+      console.error('❌ Permission request failed:', error);
+      return false;
     }
   }
 

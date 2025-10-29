@@ -40,8 +40,21 @@ export class SolanaService {
     }
   }
 
-  async createWallet(): Promise<{ publicKey: string; secretKey: string }> {
-    const keypair = nacl.sign.keyPair();
+  async createWallet(seed?: string): Promise<{ publicKey: string; secretKey: string }> {
+    let keypair;
+    
+    if (seed) {
+      // Derive deterministic keypair from seed
+      const seedBytes = new TextEncoder().encode(seed);
+      const hash = nacl.hash(seedBytes).slice(0, 32); // Use first 32 bytes as seed
+      keypair = nacl.sign.keyPair.fromSeed(hash);
+      console.log('✅ Created deterministic wallet from seed');
+    } else {
+      // Generate random keypair (fallback)
+      keypair = nacl.sign.keyPair();
+      console.log('⚠️ Created random wallet (no seed provided)');
+    }
+    
     return {
       publicKey: bs58.encode(keypair.publicKey),
       secretKey: bs58.encode(keypair.secretKey)
