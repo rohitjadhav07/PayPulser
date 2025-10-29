@@ -1,0 +1,59 @@
+{
+  "name": "paypulse",
+  "version": "1.0.0",
+  "description": "Offline-first Solana payment app with Bluetooth support",
+  "main": "node_modules/expo/AppEntry.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/paypulse.git"
+  },
+  "keywords": [
+    "solana",
+    "blockchain",
+    "cryptocurrency",
+    "payments",
+    "offline",
+    "bluetooth",
+    "react-native",
+    "expo"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@solana-mobile/mobile-wallet-adapter-protocol": "^2.0.0",
+    "@solana/web3.js": "^1.95.0",
+    "bs58": "^5.0.0",
+    "buffer": "^6.0.3",
+    "expo": "~54.0.21",
+    "expo-camera": "~17.0.8",
+    "expo-clipboard": "~8.0.7",
+    "expo-device": "~8.0.9",
+    "expo-linear-gradient": "~15.0.7",
+    "expo-local-authentication": "~17.0.7",
+    "expo-notifications": "^0.32.12",
+    "expo-secure-store": "~15.0.7",
+    "expo-status-bar": "~3.0.8",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-ble-plx": "^3.2.0",
+    "react-native-get-random-values": "^1.11.0",
+    "react-native-qrcode-svg": "^6.3.2",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-svg": "^15.12.1",
+    "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.0",
+    "@types/react": "~19.1.10",
+    "typescript": "^5.3.0"
+  }
+}
