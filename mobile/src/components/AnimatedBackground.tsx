@@ -1,4 +1,4 @@
-`import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Dimensions } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 
