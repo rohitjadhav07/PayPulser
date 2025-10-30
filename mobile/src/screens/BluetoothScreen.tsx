@@ -1,23 +1,96 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { BluetoothService } from '../services/BluetoothService';
+import { StorageService } from '../services/StorageService';
+
+type Tab = 'send' | 'receive';
 
 export const BluetoothScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const [activeTab, setActiveTab] = useState<Tab>('send');
   const [scanning, setScanning] = useState(false);
+  const [advertising, setAdvertising] = useState(false);
   const [devices, setDevices] = useState<any[]>([]);
   const [bluetoothService] = useState(() => new BluetoothService());
+  const [storage] = useState(() => new StorageService());
+  const [walletAddress, setWalletAddress] = useState<string>('');
+
+  useEffect(() => {
+    loadWalletAddress();
+    return () => {
+      if (advertising) {
+        stopAdvertising();
+      }
+    };
+  }, []);
+
+  const loadWalletAddress = async () => {
+    const wallet = await storage.getWallet();
+    if (wallet) {
+      setWalletAddress(wallet.publicKey);
+    }
+  };
 
   const startScan = async () => {
     try {
       setScanning(true);
+      setDevices([]);
       await bluetoothService.initialize();
+      
+      Alert.alert(
+        'Scanning for PayPulse Devices',
+        'Looking for nearby devices with Bluetooth enabled. This may take 10 seconds...',
+        [{ text: 'OK' }]
+      );
+      
       const foundDevices = await bluetoothService.scanForDevices(10000);
-      setDevices(foundDevices);
+      
+      if (foundDevices.length === 0) {
+        Alert.alert(
+          'No Devices Found',
+          'Make sure:\n\n1. The other device has PayPulse installed\n2. They are on the "Receive" tab\n3. "Enable Advertising" is turned ON\n4. Both devices have Bluetooth enabled\n5. Devices are within 10 meters',
+          [{ text: 'OK' }]
+        );
+      } else {
+        setDevices(foundDevices);
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to scan for devices';
       Alert.alert('Bluetooth Error', errorMessage);
     } finally {
       setScanning(false);
+    }
+  };
+
+  const startAdvertising = async () => {
+    try {
+      await bluetoothService.initialize();
+      await bluetoothService.startAdvertising(walletAddress);
+      setAdvertising(true);
+      Alert.alert(
+        '✅ Advertising Started',
+        'Your device is now discoverable to nearby PayPulse users. Keep this screen open to receive payments.',
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start advertising';
+      Alert.alert('Advertising Error', errorMessage);
+    }
+  };
+
+  const stopAdvertising = async () => {
+    try {
+      await bluetoothService.stopAdvertising();
+      setAdvertising(false);
+    } catch (error) {
+      console.error('Failed to stop advertising:', error);
+    }
+  };
+
+  const toggleAdvertising = async () => {
+    if (advertising) {
+      await stopAdvertising();
+    } else {
+      await startAdvertising();
     }
   };
 
@@ -31,83 +104,155 @@ export const BluetoothScreen: React.FC<{ onBack: () => void }> = ({ onBack }) =>
         <View style={{ width: 40 }} />
       </View>
 
-      <View style={styles.content}>
-        <View style={styles.infoCard}>
-          <Text style={styles.infoIcon}>⚡</Text>
-          <Text style={styles.infoTitle}>Offline Payments</Text>
-          <Text style={styles.infoText}>
-            Send payments via Bluetooth when you don't have internet. Transactions are cryptographically signed and sync when you're back online.
-          </Text>
-        </View>
-
+      {/* Tabs */}
+      <View style={styles.tabContainer}>
         <TouchableOpacity
-          style={[styles.scanButton, scanning && styles.scanButtonDisabled]}
-          onPress={startScan}
-          disabled={scanning}
+          style={[styles.tab, activeTab === 'send' && styles.tabActive]}
+          onPress={() => setActiveTab('send')}
         >
-          {scanning ? (
-            <>
-              <ActivityIndicator color="#000" />
-              <Text style={styles.scanButtonText}>Scanning...</Text>
-            </>
-          ) : (
-            <Text style={styles.scanButtonText}>🔍 Scan for Devices</Text>
-          )}
+          <Text style={[styles.tabText, activeTab === 'send' && styles.tabTextActive]}>
+            Send
+          </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'receive' && styles.tabActive]}
+          onPress={() => setActiveTab('receive')}
+        >
+          <Text style={[styles.tabText, activeTab === 'receive' && styles.tabTextActive]}>
+            Receive
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-        <ScrollView style={styles.deviceList}>
-          {devices.length === 0 && !scanning && (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No devices found</Text>
-              <Text style={styles.emptyStateSubtext}>
-                Make sure Bluetooth is enabled and the recipient's device is nearby
+      <View style={styles.content}>
+        {activeTab === 'send' ? (
+          <>
+            <View style={styles.infoCard}>
+              <Text style={styles.infoIcon}>📤</Text>
+              <Text style={styles.infoTitle}>Send Payment</Text>
+              <Text style={styles.infoText}>
+                Scan for nearby devices to send SOL via Bluetooth
               </Text>
             </View>
-          )}
 
-          {devices.map((device, index) => (
-            <TouchableOpacity key={index} style={styles.deviceCard}>
-              <View style={styles.deviceIcon}>
-                <Text style={styles.deviceIconText}>📱</Text>
+            <TouchableOpacity
+              style={[styles.scanButton, scanning && styles.scanButtonDisabled]}
+              onPress={startScan}
+              disabled={scanning}
+            >
+              {scanning ? (
+                <>
+                  <ActivityIndicator color="#000" />
+                  <Text style={styles.scanButtonText}>Scanning...</Text>
+                </>
+              ) : (
+                <Text style={styles.scanButtonText}>🔍 Scan for Devices</Text>
+              )}
+            </TouchableOpacity>
+
+            <ScrollView style={styles.deviceList}>
+              {devices.length === 0 && !scanning && (
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyStateText}>No devices found</Text>
+                  <Text style={styles.emptyStateSubtext}>
+                    Tap "Scan for Devices" to find nearby PayPulse users
+                  </Text>
+                </View>
+              )}
+
+              {devices.map((device, index) => (
+                <TouchableOpacity key={index} style={styles.deviceCard}>
+                  <View style={styles.deviceIcon}>
+                    <Text style={styles.deviceIconText}>📱</Text>
+                  </View>
+                  <View style={styles.deviceInfo}>
+                    <Text style={styles.deviceName}>{device.name || 'Unknown Device'}</Text>
+                    <Text style={styles.deviceId}>{device.id}</Text>
+                  </View>
+                  <View style={styles.deviceArrow}>
+                    <Text style={styles.deviceArrowText}>→</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </>
+        ) : (
+          <>
+            <View style={styles.infoCard}>
+              <Text style={styles.infoIcon}>📥</Text>
+              <Text style={styles.infoTitle}>Receive Payment</Text>
+              <Text style={styles.infoText}>
+                Note: BLE advertising requires additional native modules. For now, use device Bluetooth settings to make your device discoverable, or share your wallet address directly.
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={[
+                styles.advertisingButton,
+                advertising && styles.advertisingButtonActive
+              ]}
+              onPress={toggleAdvertising}
+            >
+              <View style={styles.advertisingToggle}>
+                <View style={[
+                  styles.advertisingToggleCircle,
+                  advertising && styles.advertisingToggleCircleActive
+                ]} />
               </View>
-              <View style={styles.deviceInfo}>
-                <Text style={styles.deviceName}>{device.name || 'Unknown Device'}</Text>
-                <Text style={styles.deviceId}>{device.id}</Text>
-              </View>
-              <View style={styles.deviceArrow}>
-                <Text style={styles.deviceArrowText}>→</Text>
+              <View style={styles.advertisingContent}>
+                <Text style={styles.advertisingTitle}>
+                  {advertising ? '🟢 Accepting Payments' : '⚪ Enable Advertising'}
+                </Text>
+                <Text style={styles.advertisingSubtext}>
+                  {advertising 
+                    ? 'Your device is discoverable to nearby users'
+                    : 'Turn on to receive payments via Bluetooth'
+                  }
+                </Text>
               </View>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
 
-        <View style={styles.howItWorks}>
-          <Text style={styles.howItWorksTitle}>How it works</Text>
-          <View style={styles.step}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>1</Text>
+            {advertising && (
+              <View style={styles.walletCard}>
+                <Text style={styles.walletLabel}>Your Wallet Address:</Text>
+                <Text style={styles.walletAddress} numberOfLines={1} ellipsizeMode="middle">
+                  {walletAddress}
+                </Text>
+                <Text style={styles.walletHint}>
+                  Keep this screen open to receive payments
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.howItWorks}>
+              <Text style={styles.howItWorksTitle}>How to receive</Text>
+              <View style={styles.step}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>1</Text>
+                </View>
+                <Text style={styles.stepText}>Toggle "Enable Advertising" ON</Text>
+              </View>
+              <View style={styles.step}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>2</Text>
+                </View>
+                <Text style={styles.stepText}>Keep this screen open</Text>
+              </View>
+              <View style={styles.step}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>3</Text>
+                </View>
+                <Text style={styles.stepText}>Sender will scan and find your device</Text>
+              </View>
+              <View style={styles.step}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>4</Text>
+                </View>
+                <Text style={styles.stepText}>Accept or reject incoming payments</Text>
+              </View>
             </View>
-            <Text style={styles.stepText}>Scan for nearby devices</Text>
-          </View>
-          <View style={styles.step}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>2</Text>
-            </View>
-            <Text style={styles.stepText}>Select recipient and enter amount</Text>
-          </View>
-          <View style={styles.step}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>3</Text>
-            </View>
-            <Text style={styles.stepText}>Transaction is signed and sent via Bluetooth</Text>
-          </View>
-          <View style={styles.step}>
-            <View style={styles.stepNumber}>
-              <Text style={styles.stepNumberText}>4</Text>
-            </View>
-            <Text style={styles.stepText}>Auto-syncs to blockchain when online</Text>
-          </View>
-        </View>
+          </>
+        )}
       </View>
     </View>
   );
@@ -124,6 +269,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     paddingTop: 60,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    gap: 12,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: '#1A1A24',
+    alignItems: 'center',
+  },
+  tabActive: {
+    backgroundColor: '#00D4FF',
+  },
+  tabText: {
+    color: '#888',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  tabTextActive: {
+    color: '#000',
   },
   backButton: {
     width: 40,
@@ -288,5 +457,77 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 14,
     flex: 1,
+  },
+  advertisingButton: {
+    backgroundColor: '#1A1A24',
+    borderRadius: 16,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: '#2A2A3A',
+  },
+  advertisingButtonActive: {
+    backgroundColor: 'rgba(20, 241, 149, 0.1)',
+    borderColor: '#14F195',
+  },
+  advertisingToggle: {
+    width: 56,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#2A2A3A',
+    padding: 2,
+    marginRight: 16,
+    justifyContent: 'center',
+  },
+  advertisingToggleCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#666',
+  },
+  advertisingToggleCircleActive: {
+    backgroundColor: '#14F195',
+    alignSelf: 'flex-end',
+  },
+  advertisingContent: {
+    flex: 1,
+  },
+  advertisingTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  advertisingSubtext: {
+    color: '#888',
+    fontSize: 14,
+  },
+  walletCard: {
+    backgroundColor: '#1A1A24',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#2A2A3A',
+  },
+  walletLabel: {
+    color: '#888',
+    fontSize: 12,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  walletAddress: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: 'monospace',
+    marginBottom: 12,
+  },
+  walletHint: {
+    color: '#14F195',
+    fontSize: 14,
+    textAlign: 'center',
   },
 });

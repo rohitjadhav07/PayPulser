@@ -169,17 +169,29 @@ eas build --platform android --profile production
 
 ### Test Bluetooth on Physical Devices
 
+**⚠️ Current Limitation:**
+BLE advertising (peripheral mode) is not yet implemented. See `BLUETOOTH_WORKAROUND.md` for details.
+
+**Workaround for Testing:**
+
 **Requirements:**
 - 2 Android phones
 - PayPulse APK installed on both
 
 **Steps:**
-1. Install the preview build APK on both devices
-2. On Device A: Open app → Bluetooth → Receive → Enable Advertising
-3. On Device B: Open app → Bluetooth → Scan for Devices
-4. Device B should see Device A in the list
-5. Select Device A, enter amount, send payment
-6. Device A receives and can accept/reject
+1. **Pair devices via Android Bluetooth settings first:**
+   - Phone A: Settings → Bluetooth → Make discoverable
+   - Phone B: Settings → Bluetooth → Scan and pair with Phone A
+
+2. **Test in PayPulse:**
+   - Phone A: Open PayPulse → Bluetooth → Receive tab (shows wallet address)
+   - Phone B: Open PayPulse → Bluetooth → Send tab → Scan for Devices
+   - Phone B should see Phone A in the device list
+   - Select device and test payment flow
+
+**Alternative:**
+- Use wallet address sharing (copy/paste or QR code)
+- Implement QR code scanning for easier address exchange
 
 ---
 
