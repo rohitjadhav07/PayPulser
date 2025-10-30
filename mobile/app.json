@@ -47,7 +47,8 @@
           ],
           "bluetoothAlwaysPermission": "Allow $(PRODUCT_NAME) to use Bluetooth for offline payments"
         }
-      ]
+      ],
+      "./plugins/withBLEAdvertiser.js"
     ],
     "extra": {
       "eas": {

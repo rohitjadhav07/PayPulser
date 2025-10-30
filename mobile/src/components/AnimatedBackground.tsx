@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+`import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Dimensions } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 
@@ -66,7 +66,7 @@ export const AnimatedBackground: React.FC = () => {
         <Circle cx={width * 0.8} cy={height * 0.6} r="180" fill="url(#grad2)" />
         <Circle cx={width * 0.5} cy={height * 0.8} r="160" fill="url(#grad3)" />
       </Svg>
-      
+
       <Animated.View
         style={[
           styles.pulseCircle,

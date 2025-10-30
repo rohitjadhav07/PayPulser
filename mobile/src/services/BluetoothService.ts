@@ -5,6 +5,7 @@ import bs58 from 'bs58';
 import { Buffer } from 'buffer';
 import { v4 as uuidv4 } from 'uuid';
 import { PermissionsAndroid, Platform } from 'react-native';
+import NativeBLEAdvertiser from './NativeBLEAdvertiser';
 
 // PayPulse BLE Protocol UUIDs
 const PAYPULSE_SERVICE_UUID = '00001234-0000-1000-8000-00805f9b34fb';
@@ -481,12 +482,32 @@ export class BluetoothService {
   }
 
   async startAdvertising(publicKey: string): Promise<void> {
-    // In production, implement BLE peripheral mode to advertise wallet address
-    console.log('Advertising wallet:', publicKey);
+    try {
+      // Try to use native advertiser first
+      if (NativeBLEAdvertiser.isAvailable()) {
+        console.log('🎯 Using native BLE advertiser');
+        await NativeBLEAdvertiser.startAdvertising(publicKey);
+        this.isAdvertising = true;
+      } else {
+        console.warn('⚠️ Native BLE advertiser not available. Please rebuild the app with native modules.');
+        throw new Error('Native BLE advertising not available. App needs to be rebuilt with native modules.');
+      }
+    } catch (error) {
+      console.error('❌ Failed to start advertising:', error);
+      throw error;
+    }
   }
 
   async stopAdvertising(): Promise<void> {
-    console.log('Stopped advertising');
+    try {
+      if (NativeBLEAdvertiser.isAvailable()) {
+        await NativeBLEAdvertiser.stopAdvertising();
+        this.isAdvertising = false;
+        console.log('✅ Stopped advertising');
+      }
+    } catch (error) {
+      console.error('❌ Failed to stop advertising:', error);
+    }
   }
 
   // ==================== CRYPTOGRAPHIC OPERATIONS ====================
